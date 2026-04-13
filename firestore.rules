@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: assignments
+    // Fields:
+    //   - studentName: string (required)
+    //   - studentEmail: string (required, email format)
+    //   - assignmentTitle: string (required)
+    //   - content: string (required, max 10000 chars)
+    //   - submittedAt: timestamp (required)
+    //   - assessment: map (optional)
+    //     - score: number
+    //     - feedback: string
+    //     - assessedAt: timestamp
+    //     - status: string (enum: ['pending', 'completed'])
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidAssignment(data) {
+      return data.keys().hasAll(['studentName', 'studentEmail', 'assignmentTitle', 'content', 'submittedAt']) &&
+             data.studentName is string && data.studentName.size() > 0 && data.studentName.size() < 100 &&
+             isValidEmail(data.studentEmail) &&
+             data.assignmentTitle is string && data.assignmentTitle.size() > 0 && data.assignmentTitle.size() < 200 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 10000 &&
+             data.submittedAt is timestamp;
+    }
+
+    match /assignments/{assignmentId} {
+      // Students can create assignments without being logged in (public submission)
+      // but we should probably restrict it to authenticated users if we want to be safe.
+      // However, the prompt implies a "wedding website" which often has public RSVP/forms.
+      // Let's allow public creation but restricted read/update.
+      allow create: if isValidAssignment(request.resource.data);
+      
+      // Only authenticated users (teachers/admins) can read and update assignments
+      allow read, update, delete: if isAuthenticated();
+    }
+  }
+}

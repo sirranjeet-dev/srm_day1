@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "Assignment": {
+      "title": "Assignment",
+      "description": "A student's assignment submission.",
+      "type": "object",
+      "properties": {
+        "studentName": { "type": "string", "description": "Name of the student." },
+        "studentEmail": { "type": "string", "format": "email", "description": "Email of the student." },
+        "assignmentTitle": { "type": "string", "description": "Title of the assignment." },
+        "content": { "type": "string", "description": "The text content of the assignment." },
+        "submittedAt": { "type": "string", "format": "date-time", "description": "Timestamp of submission." },
+        "assessment": { "$ref": "Assessment" }
+      },
+      "required": ["studentName", "studentEmail", "assignmentTitle", "content", "submittedAt"]
+    },
+    "Assessment": {
+      "title": "Assessment",
+      "description": "AI-generated assessment of an assignment.",
+      "type": "object",
+      "properties": {
+        "score": { "type": "number", "description": "Numerical score (0-100)." },
+        "feedback": { "type": "string", "description": "Detailed feedback." },
+        "assessedAt": { "type": "string", "format": "date-time", "description": "Timestamp of assessment." },
+        "status": { "type": "string", "enum": ["pending", "completed"], "description": "Current status of assessment." }
+      }
+    }
+  },
+  "firestore": {
+    "/assignments/{assignmentId}": {
+      "schema": "Assignment",
+      "description": "Collection of student assignments."
+    }
+  }
+}
